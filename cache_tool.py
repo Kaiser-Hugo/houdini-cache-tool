@@ -1,7 +1,7 @@
 """Cache Tool - versioned geometry cache exporter for Houdini.
 
 Exports the selected SOP node to:
-    $HIP/cache/<element>/vXXX/<element>_vXXX.<frame>.bgeo.sc
+	$HIP/cache/<element>/vXXX/<element>_vXXX.<frame>.bgeo.sc
 along with an info.json file. Existing versions are never overwritten.
 """
 import datetime
@@ -141,6 +141,32 @@ def run():
 		out_dir, count = export_cache(node, element, start, end, static)
 		hou.ui.displayMessage(f"{count} file(s) written to:\n{out_dir}")
 
+	except CacheToolError as e:
+		hou.ui.displayMessage(str(e), severity=hou.severityType.Error)
+	except hou.OperationInterrupted:
+		hou.ui.displayMessage("Export cancelled. This version folder is incomplete.",
+							  severity=hou.severityType.Warning)
+
+
+def hda_export(hda_node):
+	"""Called by the Export button of the Cache Export HDA."""
+	try:
+		if hou.hipFile.isNewFile():  # never saved yet ('untitled').
+			raise CacheToolError("Save your scene before exporting a cache.")
+
+		if not hda_node.inputs():
+			raise CacheToolError("Connect a node to the Cache Export input.")
+
+		element = hda_node.evalParm("element")
+		element = clean_name(element)
+		if not element:
+			raise CacheToolError("The element name is empty.")
+
+		static = bool(hda_node.evalParm("static"))
+		start, end = hda_node.evalParmTuple("frange")
+
+		out_dir, count = export_cache(hda_node, element, start, end, static)
+		hou.ui.displayMessage(f"{count} file(s) written to:\n{out_dir}")
 	except CacheToolError as e:
 		hou.ui.displayMessage(str(e), severity=hou.severityType.Error)
 	except hou.OperationInterrupted:
