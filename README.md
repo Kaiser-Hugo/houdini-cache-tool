@@ -85,3 +85,11 @@ Example `info.json`:
 ## Author
 
 Hugo Kaiser — 3D / FX artist moving towards pipeline TD work.
+
+## Development notes
+
+This tool was built with the help of Claude (Anthropic) as a coding assistant.
+I defined the specification and folder conventions, tested every feature in
+Houdini, and reviewed and understood all of the code. Using AI this way —
+directing it, verifying its output and catching issues such as deprecated
+API calls — is part of what I wanted to practise with this project.
