@@ -130,6 +130,22 @@ def build_cache_path(element, vtag, static):
 	return os.path.join(folder, filename)
 
 
+def version_menu(hda_node):
+	"""Return the flat [token, label, ...] list for the HDA's Version menu."""
+	element = clean_name(hda_node.evalParm("element"))
+	element_dir = os.path.join(hou.text.expandString("$HIP"), CACHE_FOLDER, element)
+	menu=[]
+	for vtag in list_versions(element_dir):
+		info = read_info(os.path.join(element_dir, vtag))
+		date = info.get("date","")
+		if date:
+			label = f"{vtag}  ({date[:10]})"
+		else:
+			label = vtag
+		menu.extend([vtag, label])
+	return menu
+
+
 def export_cache(node, element, start, end, static):
 	"""Export the node's geometry and return (version folder, file count)."""
 	element_dir = os.path.join(hou.text.expandString("$HIP"), CACHE_FOLDER, element)
