@@ -1,7 +1,7 @@
 """Cache Tool - versioned geometry cache exporter for Houdini.
 
 Exports the selected SOP node to:
-	$HIP/cache/<element>/vXXX/<element>_vXXX.<frame>.bgeo.sc
+    $HIP/cache/<element>/vXXX/<element>_vXXX.<frame>.bgeo.sc
 along with an info.json file. Existing versions are never overwritten.
 """
 import datetime
@@ -21,9 +21,7 @@ class CacheToolError(Exception):
 	"""Expected error, shown to the artist as a clean message instead of a crash."""
 
 
-# ---------------------------------------------------------------------------
-
-def clean_name(name):
+def clean_name(name: str) -> str:
 	"""Sanitize an element name: 'Fumée Rouge' -> 'fumee_rouge'."""
 	name = unicodedata.normalize("NFKD", name)  # split 'é' into 'e' + accent
 	name = name.encode("ascii", "ignore").decode("ascii")  # drop the accents
@@ -44,7 +42,33 @@ def next_version(element_dir):
 	return max(versions, default=0) + 1
 
 
-# ---------------------------------------------------------------------------
+def check_scene_saved():
+	"""Raise a CacheToolError if the scene has never been saved."""
+	if hou.hipFile.isNewFile():
+		raise CacheToolError("Save your scene before exporting a cache.")
+
+
+def validate_element_name(text):
+	"""Return a valid element name or raise a CacheToolError if the name is empty."""
+	element = clean_name(text)
+	if not element:
+		raise CacheToolError("The element name is empty.")
+	return element
+
+
+def report_errors(func):
+	"""Decorator: show expected errors to the artist instead of crashing."""
+
+	def wrapper(*args, **kwargs):
+		try:
+			return func(*args, **kwargs)
+		except CacheToolError as e:
+			hou.ui.displayMessage(str(e), severity=hou.severityType.Error)
+		except hou.OperationInterrupted:
+			hou.ui.displayMessage("Export cancelled. This version folder is incomplete.",
+								  severity=hou.severityType.Warning)
+
+	return wrapper
 
 
 def get_selected_sop():
@@ -109,66 +133,46 @@ def export_cache(node, element, start, end, static):
 	return out_dir, count
 
 
-# ---------------------------------------------------------------------------
-
+@report_errors
 def run():
-	try:
-		if hou.hipFile.isNewFile():  # never saved yet ('untitled').
-			raise CacheToolError("Save your scene before exporting a cache.")
+	check_scene_saved()
 
-		node = get_selected_sop()
+	node = get_selected_sop()
 
-		button, text = hou.ui.readInput(
-			"Element name to cache:",
-			buttons=("OK", "Cancel"),
-			default_choice=0, close_choice=1,
-			initial_contents=node.name())
-		if button == 1:
-			return
-		element = clean_name(text)
-		if not element:
-			raise CacheToolError("The element name is empty.")
+	button, text = hou.ui.readInput(
+		"Element name to cache:",
+		buttons=("OK", "Cancel"),
+		default_choice=0, close_choice=1,
+		initial_contents=node.name())
+	if button == 1:
+		return
+	element=validate_element_name(text)
 
-		choice = hou.ui.displayMessage(
-			f"Cache type for '{element}'?",
-			buttons=("Animated (timeline range)", "Static (current frame)", "Cancel"),
-			default_choice=0, close_choice=2)
-		if choice == 2:
-			return
-		static = (choice == 1)
+	choice = hou.ui.displayMessage(
+		f"Cache type for '{element}'?",
+		buttons=("Animated (timeline range)", "Static (current frame)", "Cancel"),
+		default_choice=0, close_choice=2)
+	if choice == 2:
+		return
+	static = (choice == 1)
 
-		start, end = hou.playbar.frameRange()
-		out_dir, count = export_cache(node, element, start, end, static)
-		hou.ui.displayMessage(f"{count} file(s) written to:\n{out_dir}")
-
-	except CacheToolError as e:
-		hou.ui.displayMessage(str(e), severity=hou.severityType.Error)
-	except hou.OperationInterrupted:
-		hou.ui.displayMessage("Export cancelled. This version folder is incomplete.",
-							  severity=hou.severityType.Warning)
+	start, end = hou.playbar.frameRange()
+	out_dir, count = export_cache(node, element, start, end, static)
+	hou.ui.displayMessage(f"{count} file(s) written to:\n{out_dir}")
 
 
+@report_errors
 def hda_export(hda_node):
 	"""Called by the Export button of the Cache Export HDA."""
-	try:
-		if hou.hipFile.isNewFile():  # never saved yet ('untitled').
-			raise CacheToolError("Save your scene before exporting a cache.")
+	check_scene_saved()
 
-		if not hda_node.inputs():
-			raise CacheToolError("Connect a node to the Cache Export input.")
+	if not hda_node.inputs():
+		raise CacheToolError("Connect a node to the Cache Export input.")
 
-		element = hda_node.evalParm("element")
-		element = clean_name(element)
-		if not element:
-			raise CacheToolError("The element name is empty.")
+	element=validate_element_name(hda_node.evalParm("element"))
 
-		static = bool(hda_node.evalParm("static"))
-		start, end = hda_node.evalParmTuple("frange")
+	static = bool(hda_node.evalParm("static"))
+	start, end = hda_node.evalParmTuple("frange")
 
-		out_dir, count = export_cache(hda_node, element, start, end, static)
-		hou.ui.displayMessage(f"{count} file(s) written to:\n{out_dir}")
-	except CacheToolError as e:
-		hou.ui.displayMessage(str(e), severity=hou.severityType.Error)
-	except hou.OperationInterrupted:
-		hou.ui.displayMessage("Export cancelled. This version folder is incomplete.",
-							  severity=hou.severityType.Warning)
+	out_dir, count = export_cache(hda_node, element, start, end, static)
+	hou.ui.displayMessage(f"{count} file(s) written to:\n{out_dir}")
