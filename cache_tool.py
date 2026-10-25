@@ -42,6 +42,18 @@ def next_version(element_dir):
 	return max(versions, default=0) + 1
 
 
+def list_versions(element_dir):
+	"""Return the sorted list of version folders (v001, v002...) in element_dir."""
+	if not os.path.isdir(element_dir):  # no folder yet -> no versions
+		return []
+	versions = []
+	for folder in os.listdir(element_dir):
+		match = re.fullmatch(r"v(\d{3})", folder)
+		if match:
+			versions.append(folder)
+	return sorted(versions)
+
+
 def check_scene_saved():
 	"""Raise a CacheToolError if the scene has never been saved."""
 	if hou.hipFile.isNewFile():
@@ -98,6 +110,26 @@ def write_info(out_dir, node, element, version, frame_range):
 		json.dump(info, f, indent=4, ensure_ascii=False)
 
 
+def read_info(version_dir):
+	"""Return the content of info.json in version_dir, or an empty dict."""
+	path = os.path.join(version_dir, "info.json")
+	if not os.path.isfile(path):
+		return {}
+	with open(path, "r", encoding="utf-8") as f:
+		return json.load(f)
+
+
+def build_cache_path(element, vtag, static):
+	"""Return the Houdini path of a cached version ($F4 for animated caches)."""
+	base = f"{element}_{vtag}"
+	folder = f"$HIP/{CACHE_FOLDER}/{element}/{vtag}"
+	if static:
+		filename = f"{base}{EXTENSION}"
+	else:
+		filename = f"{base}.$F4{EXTENSION}"
+	return os.path.join(folder, filename)
+
+
 def export_cache(node, element, start, end, static):
 	"""Export the node's geometry and return (version folder, file count)."""
 	element_dir = os.path.join(hou.text.expandString("$HIP"), CACHE_FOLDER, element)
@@ -146,7 +178,7 @@ def run():
 		initial_contents=node.name())
 	if button == 1:
 		return
-	element=validate_element_name(text)
+	element = validate_element_name(text)
 
 	choice = hou.ui.displayMessage(
 		f"Cache type for '{element}'?",
@@ -169,7 +201,7 @@ def hda_export(hda_node):
 	if not hda_node.inputs():
 		raise CacheToolError("Connect a node to the Cache Export input.")
 
-	element=validate_element_name(hda_node.evalParm("element"))
+	element = validate_element_name(hda_node.evalParm("element"))
 
 	static = bool(hda_node.evalParm("static"))
 	start, end = hda_node.evalParmTuple("frange")
