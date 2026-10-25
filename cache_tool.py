@@ -134,16 +134,52 @@ def version_menu(hda_node):
 	"""Return the flat [token, label, ...] list for the HDA's Version menu."""
 	element = clean_name(hda_node.evalParm("element"))
 	element_dir = os.path.join(hou.text.expandString("$HIP"), CACHE_FOLDER, element)
-	menu=[]
+	menu = []
 	for vtag in list_versions(element_dir):
 		info = read_info(os.path.join(element_dir, vtag))
-		date = info.get("date","")
-		if date:
-			label = f"{vtag}  ({date[:10]})"
+		date = info.get("date", "")
+		frame_range = info.get("frame_range")
+		if frame_range:
+			start, end = frame_range
+			if start == end:
+				kind = "[static]"
+			else:
+				kind = f"[anim {start}-{end}]"
 		else:
-			label = vtag
+			kind = ""
+		if date:
+			short_date = date.replace("T", "/")[:16]
+			label = f"{vtag} {kind} ({short_date})"
+		else:
+			label =f"{vtag} {kind}"
 		menu.extend([vtag, label])
 	return menu
+
+
+@report_errors
+def hda_load(hda_node):
+	"""Called by the Load button: create a File SOP reading the chosen version."""
+	element = validate_element_name(hda_node.evalParm("element"))
+	vtag = hda_node.evalParm("version")
+	if not vtag:
+		raise CacheToolError("Choose a version to load.")
+	element_dir = os.path.join(hou.text.expandString("$HIP"), CACHE_FOLDER, element)
+	info = read_info(os.path.join(element_dir, vtag))
+	if "frame_range" not in info:
+		raise CacheToolError("The export was probably cancelled")
+	start, end = info["frame_range"]
+	static = (start == end)
+	path = build_cache_path(element, vtag, static)
+	parent = hda_node.parent()
+	node_name = f"{element}_{vtag}"
+	existing = parent.node(node_name)
+	if existing:
+		existing.setSelected(True, clear_all_selected=True)
+		hou.ui.displayMessage(f"{node_name} is already loaded.")
+		return
+	file_node = parent.createNode("file", node_name)
+	file_node.parm("file").set(path)
+	file_node.setPosition(hda_node.position() + hou.Vector2(3, 0))
 
 
 def export_cache(node, element, start, end, static):
