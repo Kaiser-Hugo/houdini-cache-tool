@@ -55,30 +55,38 @@ Example `info.json`:
    ```bash
    git clone https://github.com/Kaiser-Hugo/houdini-cache-tool.git
    ```
-2. In Houdini, right-click a shelf → **New Tool…**, and paste this in the **Script** tab (adjust the path):
-   ```python
-   import sys
-   import importlib
+2. Copy `cache_tool.json` into your Houdini packages folder
+   (`~/houdini22.0/packages/` on Linux; create it if needed).
+3. Edit the copied file and replace `/path/to/houdini-cache-tool`
+   with the folder where you cloned the repository.
+4. Restart Houdini. The **Cache Export** node is now available in SOPs,
+   and `import cache_tool` works from any Python script.
 
-   TOOL_PATH = "/path/to/houdini-cache-tool"
-   if TOOL_PATH not in sys.path:
-       sys.path.append(TOOL_PATH)
+### Optional: shelf button
 
-   import cache_tool
-   importlib.reload(cache_tool)
-   cache_tool.run()
-   ```
+Create a new shelf tool with this script:
+```python
+import cache_tool
+cache_tool.run()
+```
 
 ## Usage
 
+### Cache Export HDA (recommended)
+
 1. Save your scene.
-2. Select the SOP node you want to cache.
-3. Click the shelf button, enter an element name, choose **Animated** or **Static**.
-4. The cache is written to the next free version folder.
+2. In a SOP network, drop a **Cache Export** node and connect it to the geometry you want to cache.
+3. Set the **Element Name**, tick **Static** for a single frame, or adjust the **Frame Range**.
+4. Click **Export**.
+
+### Shelf tool
+
+1. Save your scene and select the SOP node to cache.
+2. Click the shelf button, enter an element name, choose **Animated** or **Static**.
 
 ## Roadmap
 
-- [ ] Package the tool as an HDA with parameters and an Export button
+- [x] Package the tool as an HDA with parameters and an Export button
 - [ ] Version browser: list existing versions and load one with a File SOP
 - [ ] Optional shot level (`cache/<shot>/<element>/vXXX`)
 

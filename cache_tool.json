@@ -1,0 +1,7 @@
+{
+    "env": [
+        { "CACHE_TOOL": "/path/to/houdini-cache-tool" },
+        { "PYTHONPATH": { "value": "$CACHE_TOOL", "method": "prepend" } }
+    ],
+    "hpath": "$CACHE_TOOL"
+}
