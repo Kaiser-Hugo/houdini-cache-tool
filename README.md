@@ -3,19 +3,20 @@
 A small pipeline tool for SideFX Houdini that exports SOP geometry caches into a clean, versioned folder structure — and never overwrites an existing version.
 
 ![Cache Export HDA](docs/cache_export_hda.png)
+
 ## Why
 
 Without a convention, caches end up as `output.abc` or `smoke_v2_final_OK.bgeo.sc` scattered around a project. This tool enforces one predictable layout so anyone (or any script) can find the right cache.
 
 ## Features
 
-- Exports the selected SOP node to `$HIP/cache/<element>/vXXX/`
+- Exports SOP geometry (via the Cache Export HDA or a shelf tool) to $HIP/cache/<element>/vXXX/
 - Automatic version increment (`v001`, `v002`, ...) — existing versions are never touched
 - Element names are sanitized (`Fumée Rouge` → `fumee_rouge`)
 - Animated caches (timeline frame range) or static caches (current frame)
 - Writes an `info.json` next to each version (user, date, source scene, node, frame range, Houdini version)
 - Progress bar with cancel, and the timeline is restored to the artist's frame afterwards
-- Clear error messages for common mistakes (unsaved scene, nothing selected, non-SOP node)
+- Clear error messages for common mistakes (unsaved scene, missing input or selection, empty element name)
 - Version browser: a menu lists existing versions with their type, frame range and date
 - One-click **Load**: creates a File SOP reading the chosen version (reuses it if already loaded)
 
@@ -36,13 +37,16 @@ Example `info.json`:
 
 ```json
 {
-    "element": "fumee",
+    "element": "fumee_hda",
     "version": 1,
     "user": "hugo",
-    "date": "2026-10-23T22:58:12",
+    "date": "2026-10-24T15:43:59",
     "hip_file": "/home/hugo/Documents/Pipeline_Tool_I/Hip/Cache_Demo.hipnc",
-    "node": "/obj/geo1/mountain1",
-    "frame_range": [1, 48],
+    "node": "/obj/geo1/cache_export1",
+    "frame_range": [
+        1,
+        240
+    ],
     "houdini_version": "22.0.466"
 }
 ```
@@ -97,14 +101,15 @@ cache_tool.run()
 - [ ] Optional shot level (`cache/<shot>/<element>/vXXX`)
 - [ ] Clean up incomplete versions after a cancelled export
 
-## Author
-
-Hugo Kaiser — 3D / FX artist moving towards pipeline TD work.
-
 ## Development notes
 
 This tool was built with the help of Claude (Anthropic) as a coding assistant.
-I defined the specification and folder conventions, tested every feature in
-Houdini, and reviewed and understood all of the code. Using AI this way —
-directing it, verifying its output and catching issues such as deprecated
-API calls — is part of what I wanted to practise with this project.
+The first version was written with Claude's guidance while I learned the Houdini
+Python API. For the later features (the HDA export logic, the refactoring, the
+version browser and the Load button), I wrote the code myself and used Claude
+as a reviewer. I defined the specification and folder conventions, made the
+design decisions, and tested every feature in Houdini.
+
+## Author
+
+Hugo Kaiser — 3D / FX artist moving towards pipeline TD work.
