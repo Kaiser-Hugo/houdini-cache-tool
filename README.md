@@ -2,6 +2,7 @@
 
 A small pipeline tool for SideFX Houdini that exports SOP geometry caches into a clean, versioned folder structure — and never overwrites an existing version.
 
+![Cache Export HDA](docs/cache_export_hda.png)
 ## Why
 
 Without a convention, caches end up as `output.abc` or `smoke_v2_final_OK.bgeo.sc` scattered around a project. This tool enforces one predictable layout so anyone (or any script) can find the right cache.
@@ -15,6 +16,8 @@ Without a convention, caches end up as `output.abc` or `smoke_v2_final_OK.bgeo.s
 - Writes an `info.json` next to each version (user, date, source scene, node, frame range, Houdini version)
 - Progress bar with cancel, and the timeline is restored to the artist's frame afterwards
 - Clear error messages for common mistakes (unsaved scene, nothing selected, non-SOP node)
+- Version browser: a menu lists existing versions with their type, frame range and date
+- One-click **Load**: creates a File SOP reading the chosen version (reuses it if already loaded)
 
 ## Output layout
 
@@ -78,6 +81,9 @@ cache_tool.run()
 2. In a SOP network, drop a **Cache Export** node and connect it to the geometry you want to cache.
 3. Set the **Element Name**, tick **Static** for a single frame, or adjust the **Frame Range**.
 4. Click **Export**.
+5. To reload a cache, pick a version in the **Version** menu
+   (e.g. `v002  [anim 1-240]  (2026-10-25/17:38)`) and click **Load**.
+   A File SOP reading that version is created next to the node.
 
 ### Shelf tool
 
@@ -87,8 +93,9 @@ cache_tool.run()
 ## Roadmap
 
 - [x] Package the tool as an HDA with parameters and an Export button
-- [ ] Version browser: list existing versions and load one with a File SOP
+- [x] Version browser: list existing versions and load one with a File SOP
 - [ ] Optional shot level (`cache/<shot>/<element>/vXXX`)
+- [ ] Clean up incomplete versions after a cancelled export
 
 ## Author
 

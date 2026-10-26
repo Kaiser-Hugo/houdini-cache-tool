@@ -188,7 +188,6 @@ def export_cache(node, element, start, end, static):
 	version = next_version(element_dir)
 	vtag = f"v{version:03d}"  # 3 -> 'v003'
 	out_dir = os.path.join(element_dir, vtag)
-	# No exist_ok on purpose: fail rather than overwrite an existing version.
 	os.makedirs(out_dir)
 	base = f"{element}_{vtag}"
 
