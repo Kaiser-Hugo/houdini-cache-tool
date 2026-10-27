@@ -2,7 +2,9 @@
 
 A small pipeline tool for SideFX Houdini that exports SOP geometry caches into a clean, versioned folder structure — and never overwrites an existing version.
 
-![Cache Export HDA](docs/cache_export_hda.png)
+[![Cache Export HDA](docs/cache_export_hda.png)](https://youtu.be/ydPGAWynRHc)
+
+▶️ **[Watch the demo on YouTube](https://youtu.be/ydPGAWynRHc)** (1 min 25)
 
 ## Why
 
@@ -100,6 +102,7 @@ cache_tool.run()
 - [x] Version browser: list existing versions and load one with a File SOP
 - [ ] Optional shot level (`cache/<shot>/<element>/vXXX`)
 - [ ] Clean up incomplete versions after a cancelled export
+- [ ] Offset each loaded File SOP so they don't stack on top of each other
 
 ## Development notes
 
